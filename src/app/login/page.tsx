@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Mail, Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -8,6 +9,16 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
+function LinkError() {
+  const erro = useSearchParams().get('erro')
+  if (erro !== 'link') return null
+  return (
+    <p role="alert" className="rounded-lg bg-red-100 p-3 text-sm text-red-900">
+      Esse link expirou ou já foi usado. Peça um novo abaixo.
+    </p>
+  )
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -39,6 +50,8 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold">Orçamento Rápido</h1>
         <p className="text-muted">Monte o orçamento da sua oficina em menos de 2 minutos.</p>
       </div>
+
+      <Suspense><LinkError /></Suspense>
 
       <Card>
         {sent ? (

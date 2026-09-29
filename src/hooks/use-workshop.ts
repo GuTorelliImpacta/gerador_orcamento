@@ -16,6 +16,7 @@ export function useWorkshop() {
       if (error) throw error
       return data as Workshop
     },
+    retry: false, // "sem oficina ainda" é um estado esperado (primeiro acesso), não um erro de rede
   })
 }
 
