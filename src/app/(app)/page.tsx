@@ -1,15 +1,20 @@
-import { FileText } from 'lucide-react'
-import { Card } from '@/components/ui/card'
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
+import { Kpis } from '@/components/dashboard/kpis'
+import { QuoteList } from '@/components/dashboard/quote-list'
 
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-2xl font-bold">Orçamentos</h1>
-      <Card className="flex flex-col items-center gap-2 py-10 text-center">
-        <FileText className="size-8 text-muted" aria-hidden />
-        <p className="font-medium">Você ainda não tem orçamentos</p>
-        <p className="text-sm text-muted">Crie o primeiro em 2 minutos.</p>
-      </Card>
+    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <Link
+        href="/orcamentos/novo"
+        className="hidden min-h-16 items-center justify-center gap-2 rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow hover:opacity-90 md:flex"
+      >
+        <Plus className="size-6" aria-hidden /> Novo orçamento
+      </Link>
+      <Kpis />
+      <h1 className="text-xl font-bold">Orçamentos recentes</h1>
+      <QuoteList />
     </div>
   )
 }

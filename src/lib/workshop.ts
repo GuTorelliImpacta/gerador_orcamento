@@ -5,6 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 export async function requireWorkshop() {
   const supabase = await createClient()
   const { data: workshop } = await supabase.from('workshops').select('*').maybeSingle()
-  if (!workshop) redirect('/onboarding')
+  if (!workshop || !workshop.onboarding_concluido) redirect('/onboarding')
   return { supabase, workshop }
 }

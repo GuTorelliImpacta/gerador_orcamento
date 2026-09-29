@@ -61,6 +61,7 @@ export type Database = {
         snapshot: Json; total_pecas_cents: number; total_mao_de_obra_cents: number
         subtotal_cents: number; desconto_geral_cents: number; total_cents: number
         created_at: string; updated_at: string; sent_at: string | null; approved_at: string | null
+        placa: string | null; cliente_nome: string | null
       }, 'workshop_id'>
       quote_items: Table<{
         id: string; quote_id: string; ordem: number; operacao: string; categoria_mao_de_obra: Cat
@@ -73,6 +74,8 @@ export type Database = {
     Functions: {
       create_workshop: { Args: { p_nome: string }; Returns: string }
       current_workshop_id: { Args: never; Returns: string }
+      delete_customer: { Args: { p_id: string }; Returns: undefined }
+      load_demo_data: { Args: never; Returns: undefined }
       get_public_quote: { Args: { p_token: string }; Returns: Json }
       learn_catalog_item: {
         Args: {
