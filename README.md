@@ -8,7 +8,7 @@ Web app responsivo (mobile-first, instalável como PWA) para donos de oficinas m
 
 | Área | Recursos |
 | --- | --- |
-| Acesso | Login por link no e-mail (sem senha) · cada usuário tem a sua oficina, isolada por RLS |
+| Acesso | Login por link no e-mail (sem senha) ou por e-mail e senha · cada usuário tem a sua oficina, isolada por RLS |
 | Onboarding | 3 passos (pulável): dados da oficina com busca de endereço por CEP e logo (redimensionada no navegador, ≤ 500 KB) → valores padrão → escolha do layout com pré-visualização |
 | Novo orçamento | Wizard de 4 etapas com **rascunho salvo automaticamente**: veículo/cliente (placa preenche tudo se o carro já passou por aqui, máscara antiga/Mercosul, busca FIPE opcional) → itens (catálogo com busca, arrastar para reordenar, totais ao vivo) → condições → revisão e envio |
 | PDF | 3 layouts (clássico, moderno, compacto), cores/fonte/blocos configuráveis, quebra de página com cabeçalho repetido, rodapé "página X de Y", nome `Orcamento-{numero}-{placa}.pdf` |
@@ -50,19 +50,13 @@ Você precisa de **um projeto Supabase** (grátis serve para começar).
    - **SQL Editor** do dashboard: abra cada arquivo, cole e rode, um por vez, em ordem; ou
    - **Supabase CLI**: `npx supabase login && npx supabase link --project-ref SEU_REF && npx supabase db push`.
 3. **Chaves**: em *Project Settings → API* copie a **Project URL** e a **publishable key** (`sb_publishable_…`; a *anon key* legada também funciona) para o `.env.local` / Vercel. Não existe chave secreta no cliente — a segurança vem do RLS.
-4. **Autenticação** (*Authentication → URL Configuration*):
-   - **Site URL**: a URL de produção (ex.: `https://seu-app.vercel.app`; localmente `http://localhost:3000`).
+4. **Autenticação** (*Authentication → URL Configuration*) — **este passo é obrigatório**:
+   - **Site URL**: a URL de produção (ex.: `https://seu-app.vercel.app`; localmente `http://localhost:3000`). É para ela que o link do e-mail aponta: se ficar como `http://localhost:3000`, o link abre uma página "localhost" e não funciona.
    - **Redirect URLs**: adicione `https://seu-app.vercel.app/**` e `http://localhost:3000/**`.
-5. **Template do link mágico** (*Authentication → Email Templates → Magic Link*) — **necessário para o link funcionar no celular**, mesmo quando o e-mail abre em outro navegador. Troque o link do template por:
-
-   ```html
-   <h2>Seu acesso ao Orçamento Rápido</h2>
-   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Entrar no app</a></p>
-   <p>Ou digite este código na tela de login: <strong>{{ .Token }}</strong></p>
-   ```
-
-   O link é montado a partir da **Site URL** (passo 4): se ela ainda estiver como `http://localhost:3000`, o link do e-mail abre uma página "localhost" e não funciona. O código de 6 dígitos funciona de qualquer forma, em qualquer navegador.
-6. **E-mails em produção**: o remetente padrão do Supabase tem limite baixíssimo (poucos e-mails por hora) e serve só para testes. Antes de divulgar, configure um **SMTP próprio** em *Authentication → SMTP Settings* (Resend, Brevo, SendGrid, Amazon SES…).
+5. **Funciona no plano grátis, sem template e sem SMTP**: o app usa o e-mail padrão do Supabase (fluxo sem PKCE: o link traz a sessão na URL e abre em qualquer navegador/aparelho). Não é preciso editar nenhum template de e-mail.
+6. **Limites do e-mail padrão e como contornar**: o remetente padrão do Supabase envia só **poucos e-mails por hora** (e vale para o projeto inteiro). Duas saídas:
+   - Use a aba **"E-mail e senha"** do login, que não depende de e-mail para entrar. Para que a criação de conta também não envie e-mail, desligue *Authentication → Providers → Email → "Confirm email"* (grátis). Quem esquecer a senha entra pelo "Link no e-mail".
+   - Para uso real com vários clientes, configure um **SMTP próprio** em *Authentication → SMTP Settings* (Resend, Brevo, SendGrid, Amazon SES…) — isso também libera editar os templates de e-mail.
 7. *(Opcional)* Para ver dados de exemplo, entre no app e use **Configurações → Carregar exemplos** (10 peças, 5 serviços, 3 modelos). O arquivo `supabase/seed.sql` faz o mesmo em ambiente local.
 
 ### Testes do banco
@@ -104,7 +98,7 @@ Sem este passo o login por e-mail **não funciona** em produção.
 1. No Supabase: *Authentication → URL Configuration*.
 2. **Site URL** → a URL da Vercel (ex.: `https://gerador-orcamento.vercel.app`).
 3. **Redirect URLs** → adicione `https://gerador-orcamento.vercel.app/**`. Para deploys de preview (branches/PRs) adicione também `https://*-SEU-USUARIO-OU-TIME.vercel.app/**`.
-4. Confirme que o template do *Magic Link* foi trocado (passo 2.5) e que o SMTP próprio está configurado (2.6).
+4. Lembre dos limites de e-mail do plano grátis (passo 2.6): para muitos usuários, use e-mail e senha ou configure um SMTP próprio.
 
 ### 3.4 Testar em produção
 
@@ -128,9 +122,9 @@ Cada `git push` na branch de produção gera um novo deploy automático; cada br
 
 | Sintoma | Causa provável e solução |
 | --- | --- |
-| Login: "Não foi possível enviar o link" | Limite de e-mails do Supabase (configure SMTP próprio) ou e-mail inválido |
-| Clicar no link volta para `/login?erro=link` | Link expirado/usado, ou template do Magic Link não foi trocado (passo 2.5), ou domínio ausente nas *Redirect URLs* |
-| Link do e-mail aponta para `localhost` | *Site URL* do Supabase ainda está como `http://localhost:3000` |
+| Login: "Muitos e-mails em pouco tempo" | Limite de e-mails do Supabase: use a aba "E-mail e senha" ou configure SMTP próprio (passo 2.6) |
+| Clicar no link mostra "link expirou" | Link já usado ou vencido (peça outro); alguns apps de e-mail abrem o link antes de você, consumindo-o: toque no link só uma vez, ou use e-mail e senha |
+| Link do e-mail abre "localhost" (Safari não consegue conectar) | *Site URL* do Supabase ainda está como `http://localhost:3000` (passo 2.4) |
 | Tela de "Bem-vindo" ou erro ao criar oficina | Migrations não foram aplicadas por completo (rode todas, na ordem) |
 | Build falha na Vercel | Confira *Deployments → Build Logs*; rode `npm run build` localmente para reproduzir |
 | PDF sem a logo | Logo em formato não suportado; reenvie em PNG ou JPG em *Configurações* |
