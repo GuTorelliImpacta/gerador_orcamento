@@ -58,7 +58,10 @@ Você precisa de **um projeto Supabase** (grátis serve para começar).
    ```html
    <h2>Seu acesso ao Orçamento Rápido</h2>
    <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Entrar no app</a></p>
+   <p>Ou digite este código na tela de login: <strong>{{ .Token }}</strong></p>
    ```
+
+   O link é montado a partir da **Site URL** (passo 4): se ela ainda estiver como `http://localhost:3000`, o link do e-mail abre uma página "localhost" e não funciona. O código de 6 dígitos funciona de qualquer forma, em qualquer navegador.
 6. **E-mails em produção**: o remetente padrão do Supabase tem limite baixíssimo (poucos e-mails por hora) e serve só para testes. Antes de divulgar, configure um **SMTP próprio** em *Authentication → SMTP Settings* (Resend, Brevo, SendGrid, Amazon SES…).
 7. *(Opcional)* Para ver dados de exemplo, entre no app e use **Configurações → Carregar exemplos** (10 peças, 5 serviços, 3 modelos). O arquivo `supabase/seed.sql` faz o mesmo em ambiente local.
 

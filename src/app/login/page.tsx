@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Mail, Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -21,9 +21,25 @@ function LinkError() {
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [code, setCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
+
+  async function onVerify(e: React.FormEvent) {
+    e.preventDefault()
+    setVerifying(true)
+    const { error } = await createClient().auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' })
+    setVerifying(false)
+    if (error) {
+      toast.error('Código inválido ou expirado. Confira os números ou peça um novo.')
+      return
+    }
+    router.replace('/')
+    router.refresh()
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -61,7 +77,24 @@ export default function LoginPage() {
             <p className="text-sm text-muted">
               Enviamos um link de acesso para <strong>{email}</strong>. É só tocar nele para entrar.
             </p>
-            <Button variant="ghost" onClick={() => setSent(false)}>
+            <form onSubmit={onVerify} className="mt-2 flex w-full flex-col gap-2 border-t border-border pt-4 text-left">
+              <Label htmlFor="code">Ou digite o código do e-mail</Label>
+              <Input
+                id="code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]{6,8}"
+                maxLength={8}
+                placeholder="000000"
+                className="text-center text-lg tracking-widest"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              />
+              <Button type="submit" disabled={verifying || code.length < 6}>
+                {verifying ? 'Entrando…' : 'Entrar com o código'}
+              </Button>
+            </form>
+            <Button variant="ghost" onClick={() => { setSent(false); setCode('') }}>
               Usar outro e-mail
             </Button>
           </div>
